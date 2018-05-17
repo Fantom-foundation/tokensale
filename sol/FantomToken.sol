@@ -70,8 +70,8 @@ contract Owned {
     event OwnershipTransferred(address indexed _from, address indexed _to);
     event AdminChange(address indexed _admin, bool _status);
 
-    modifier onlyOwner { require(msg.sender == owner); _; }
-    modifier onlyAdmin { require(isAdmin[msg.sender]); _; }
+    modifier onlyOwner {require(msg.sender == owner); _;}
+    modifier onlyAdmin {require(isAdmin[msg.sender]); _;}
 
     constructor() public {
         owner = msg.sender;
@@ -176,7 +176,7 @@ contract ERC20Token is ERC20Interface, Owned {
     function transfer(address _to, uint _amount) public returns (bool success) {
         require(balances[msg.sender] >= _amount);
         balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to]                = balances[_to].add(_amount);
+        balances[_to] = balances[_to].add(_amount);
         emit Transfer(msg.sender, _to, _amount);
         return true;
     }
@@ -659,7 +659,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     /* Transfer out any accidentally sent ERC20 tokens */
 
     function transferAnyERC20Token(address tokenAddress, uint amount) public onlyOwner returns (bool success) {
-            return ERC20Interface(tokenAddress).transfer(owner, amount);
+        return ERC20Interface(tokenAddress).transfer(owner, amount);
     }
 
     /* Override "transfer" */
