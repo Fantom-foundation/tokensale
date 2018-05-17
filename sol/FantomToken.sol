@@ -2,7 +2,7 @@ pragma solidity ^0.4.23;
 
 // ----------------------------------------------------------------------------
 //
-// FTM 'Fantom' token public sale contract
+// Fantom Foundation FTM token public sale contract
 //
 // For details, please visit: http://fantom.foundation
 //
@@ -430,12 +430,17 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     mapping(address => uint) public ethContributed;
     uint public totalEthContributed;
 
+    // migration variable
+
+    bool public isMigrationPhaseOpen;
+
     // Events ---------------------------------------------
 
     event Whitelisted(address indexed account, uint countWhitelisted);
     event UpdatedTokensPerEth(uint tokensPerEth);
     event TokensMinted(address indexed account, uint tokens, uint term);
     event RegisterContribution(address indexed account, bool indexed presale, uint tokens, uint bonus, uint ethContributed, uint ethReturned);
+    event TokenExchangeRequested(address indexed account, uint tokens);
 
     // Basic Functions ------------------------------------
 
@@ -503,6 +508,11 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     function makeTradeable() public onlyOwner {
         require(atNow() > dateMainEnd);
         tokensTradeable = true;
+    }
+
+    function openMigrationPhase() public onlyOwner {
+        require(atNow() > dateMainEnd);
+        isMigrationPhaseOpen = true;
     }
 
     // Minting of unrestricted tokens ---------------------
@@ -630,6 +640,19 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         emit RegisterContribution(msg.sender, isPresale(), tokens, tokens_bonus, eth_contributed, eth_returned);
     }
 
+    // Token exchange / migration to new platform ---------
+
+    function requestTokenExchangeAll() public {
+        requestTokenExchange(balances[msg.sender]);
+    }
+
+    function requestTokenExchange(uint _tokens) public {
+        require(isMigrationPhaseOpen);
+        require(_tokens <= balances[msg.sender]);
+        transfer(0x0, _tokens);
+        tokensIssuedTotal = tokensIssuedTotal.sub(_tokens);
+        emit TokenExchangeRequested(msg.sender, _tokens);
+    }
 
     // ERC20 functions -------------------
 
