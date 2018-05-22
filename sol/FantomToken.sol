@@ -384,14 +384,15 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     // track main sale
 
-    mapping(address => uint) public balancesMain;
     uint public tokensMain;
+    mapping(address => uint) public balancesMain;
 
-    mapping(address => uint) public ethContributed;
     uint public totalEthContributed;
+    mapping(address => uint) public ethContributed;
 
     // tracking tokens minted
 
+    uint public tokensMinted;
     mapping(address => uint) public balancesMinted;
     mapping(address => mapping(uint => uint)) public balancesMintedByType;
 
@@ -417,8 +418,8 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     // Information functions
 
-    function availableToMint() public pure returns (uint) {
-        return TOKEN_TOTAL_SUPPLY.sub(TOKEN_MAIN_CAP);
+    function availableToMint() public view returns (uint) {
+        return TOKEN_TOTAL_SUPPLY.sub(TOKEN_MAIN_CAP).sub(tokensMinted);
     }
 
     function firstDayTokenLimit() public view returns (uint) {
@@ -463,6 +464,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     }
 
     function makeTradeable() public onlyOwner {
+        require(atNow() > dateMainEnd);
         tokensTradeable = true;
     }
 
@@ -473,11 +475,22 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     // Token minting --------------------------------------
 
-    function mintTokens(uint _mint_type, address _account, uint _tokens, uint _term) public onlyOwner {
+    function mintTokens(uint _mint_type, address _account, uint _tokens) public onlyOwner {
+        pMintTokens(_mint_type, _account, _tokens, 0);
+    }
+
+    function mintTokensMultiple(uint _mint_type, address[] _accounts, uint[] _tokens) public onlyOwner {
+        require(_accounts.length == _tokens.length);
+        for (uint i = 0; i < _accounts.length; i++) {
+            pMintTokens(_mint_type, _accounts[i], _tokens[i], 0);
+        }
+    }
+
+    function mintTokensLocked(uint _mint_type, address _account, uint _tokens, uint _term) public onlyOwner {
         pMintTokens(_mint_type, _account, _tokens, _term);
     }
 
-    function mintTokensMultiple(uint _mint_type, address[] _accounts, uint[] _tokens, uint[] _terms) public onlyOwner {
+    function mintTokensLockedMultiple(uint _mint_type, address[] _accounts, uint[] _tokens, uint[] _terms) public onlyOwner {
         require(_accounts.length == _tokens.length);
         require(_accounts.length == _terms.length);
         for (uint i = 0; i < _accounts.length; i++) {
@@ -499,6 +512,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         balances[_account] = balances[_account].add(_tokens);
         balancesMinted[_account] = balancesMinted[_account].add(_tokens);
         balancesMintedByType[_account][_mint_type] = balancesMintedByType[_account][_mint_type].add(_tokens);
+        tokensMinted = tokensMinted.add(_tokens);
         tokensIssuedTotal = tokensIssuedTotal.add(_tokens);
 
         // log event
@@ -540,7 +554,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         balancesMain[msg.sender] = balancesMain[msg.sender].add(tokens_issued);
         tokensMain = tokensMain.add(tokens_issued);
         tokensIssuedTotal = tokensIssuedTotal.add(tokens_issued);
-        
+
         ethContributed[msg.sender] = ethContributed[msg.sender].add(eth_contributed);
         totalEthContributed = totalEthContributed.add(eth_contributed);
 
