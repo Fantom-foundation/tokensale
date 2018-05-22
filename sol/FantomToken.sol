@@ -107,31 +107,6 @@ contract Owned {
 
 // ----------------------------------------------------------------------------
 //
-// Wallet
-//
-// ----------------------------------------------------------------------------
-
-contract Wallet is Owned {
-
-    address public wallet;
-
-    event WalletUpdated(address newWallet);
-
-    constructor() public {
-        wallet = owner;
-    }
-
-    function setWallet(address _wallet) public onlyOwner {
-        require(_wallet != address(0x0));
-        wallet = _wallet;
-        emit WalletUpdated(_wallet);
-    }
-
-}
-
-
-// ----------------------------------------------------------------------------
-//
 // ERC20Interface
 //
 // ----------------------------------------------------------------------------
@@ -218,7 +193,7 @@ contract LockSlots is ERC20Token, Utils {
     uint8 public constant LOCK_SLOTS = 5;
     mapping(address => uint[LOCK_SLOTS]) public lockTerm;
     mapping(address => uint[LOCK_SLOTS]) public lockAmnt;
-    mapping(address => bool) public hasLockedTokens;
+    mapping(address => bool) public mayHaveLockedTokens;
 
     event RegisteredLockedTokens(address indexed account, uint indexed idx, uint tokens, uint term);
 
@@ -246,24 +221,23 @@ contract LockSlots is ERC20Token, Utils {
         // register locked tokens
         if (term[idx] == 0) term[idx] = _term;
         amnt[idx] = amnt[idx].add(_tokens);
-        hasLockedTokens[_account] = true;
+        mayHaveLockedTokens[_account] = true;
         emit RegisteredLockedTokens(_account, idx, _tokens, _term);
     }
 
-    function lockedTokens(address _account) public view returns (uint locked) {
-        if (!hasLockedTokens[_account]) return;
-        uint[LOCK_SLOTS] storage term = lockTerm[_account];
-        uint[LOCK_SLOTS] storage amnt = lockAmnt[_account];
-        for (uint i = 0; i < LOCK_SLOTS; i++) {
-            if (term[i] >= atNow()) locked = locked.add(amnt[i]);
-        }
+    // public view functions
+
+    function lockedTokens(address _account) public view returns (uint) {
+        if (!mayHaveLockedTokens[_account]) return 0;
+        return pNumberOfLockedTokens(_account);
     }
 
-    function unlockedTokens (address _account) public view returns (uint unlocked) {
-        unlocked = balances[_account].sub(lockedTokens(_account));
+    function unlockedTokens(address _account) public view returns (uint) {
+        return balances[_account].sub(lockedTokens(_account));
     }
 
     function isAvailableLockSlot(address _account, uint _term) public view returns (bool) {
+        if (!mayHaveLockedTokens[_account]) return true;
         if (_term < atNow()) return true;
         uint[LOCK_SLOTS] storage term = lockTerm[_account];
         for (uint i = 0; i < LOCK_SLOTS; i++) {
@@ -271,108 +245,23 @@ contract LockSlots is ERC20Token, Utils {
         }
         return false;
     }
-    
-    // maintenance function
-    
-    function cleanLockSlots(address _account) public {
-        require(hasLockedTokens[_account]); 
-        uint locked;
+
+    // internal and private functions
+
+    function unlockedTokensInternal(address _account) internal returns (uint) {
+        // updates mayHaveLockedTokens if necessary
+        if (!mayHaveLockedTokens[_account]) return balances[_account];
+        uint locked = pNumberOfLockedTokens(_account);
+        if (locked == 0) mayHaveLockedTokens[_account] = false;
+        return balances[_account].sub(locked);
+    }
+
+    function pNumberOfLockedTokens(address _account) private view returns (uint locked) {
         uint[LOCK_SLOTS] storage term = lockTerm[_account];
         uint[LOCK_SLOTS] storage amnt = lockAmnt[_account];
         for (uint i = 0; i < LOCK_SLOTS; i++) {
-            if (term[i] < atNow()) {
-                term[i] = 0;
-                amnt[i] = 0;
-            } else {
-                locked = locked.add(amnt[i]);
-            }
+            if (term[i] >= atNow()) locked = locked.add(amnt[i]);
         }
-        if (locked == 0) hasLockedTokens[_account] = false;
-    }
-    
-}
-
-// ----------------------------------------------------------------------------
-//
-// FantomIcoDates
-//
-// ----------------------------------------------------------------------------
-
-contract FantomIcoDates is Owned, Utils {    
-
-    uint public datePresaleStart = 1527861600; // 01-JUN-2018 14:00 UTC
-    uint public datePresaleEnd   = 1527861600 + 15 days;
-    uint public dateMainStart    = 1527861600 + 30 days;
-    uint public dateMainEnd      = 1527861600 + 45 days;
-
-    uint public constant DATE_LIMIT = 1527861600 + 180 days;
-
-    event IcoDateUpdated(uint8 id, uint unixts);
-
-    constructor() public {
-        require(atNow() < datePresaleStart);
-        checkDateOrder();
-    }
-
-    // check dates
-
-    function checkDateOrder() internal view {
-        require(datePresaleStart < datePresaleEnd);
-        require(datePresaleEnd < dateMainStart);
-        require(dateMainStart < dateMainEnd);
-        require(dateMainEnd < DATE_LIMIT);
-    }
-
-    // set ico dates
-
-    function setDatePresaleStart(uint _unixts) public onlyOwner {
-        require(atNow() < _unixts && atNow() < datePresaleStart);
-        datePresaleStart = _unixts;
-        checkDateOrder();
-        emit IcoDateUpdated(1, _unixts);
-    }
-
-    function setDatePresaleEnd(uint _unixts) public onlyOwner {
-        require(atNow() < _unixts && atNow() < datePresaleEnd);
-        datePresaleEnd = _unixts;
-        checkDateOrder();
-        emit IcoDateUpdated(2, _unixts);
-    }
-
-    function setDateMainStart(uint _unixts) public onlyOwner {
-        require(atNow() < _unixts && atNow() < dateMainStart);
-        dateMainStart = _unixts;
-        checkDateOrder();
-        emit IcoDateUpdated(3, _unixts);
-    }
-
-    function setDateMainEnd(uint _unixts) public onlyOwner {
-        require(atNow() < _unixts && atNow() < dateMainEnd);
-        dateMainEnd = _unixts;
-        checkDateOrder();
-        emit IcoDateUpdated(4, _unixts);
-    }
-
-    // where are we?
-
-    function isPresaleFirstDay() public view returns (bool) {
-        if (atNow() > datePresaleStart && atNow() <= datePresaleStart + 1 days) return true;
-        return false;
-    }
-
-    function isPresale() public view returns (bool) {
-        if (atNow() > datePresaleStart && atNow() < datePresaleEnd) return true;
-        return false;
-    }
-
-    function isMainFirstDay() public view returns (bool) {
-        if (atNow() > dateMainStart && atNow() <= dateMainStart + 1 days) return true;
-        return false;
-    }
-
-    function isMain() public view returns (bool) {
-        if (atNow() > dateMainStart && atNow() < dateMainEnd) return true;
-        return false;
     }
 
 }
@@ -384,7 +273,7 @@ contract FantomIcoDates is Owned, Utils {
 //
 // ----------------------------------------------------------------------------
 
-contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
+contract FantomToken is ERC20Token, LockSlots {
 
     // Utility variable
 
@@ -398,16 +287,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     // crowdsale parameters
 
-    uint public tokensPerEth = 10000;
-    
-    uint public constant MINIMUM_CONTRIBUTION    = 0.5 ether;
-
     uint public constant TOKEN_TOTAL_SUPPLY = 1000000000 * E18;
-    uint public constant TOKEN_MINTING_CAP  =  400000000 * E18;
-    uint public constant TOKEN_PRESALE_CAP  =  300000000 * E18; // includes bonus
-    uint public constant TOKEN_MAIN_CAP     =  600000000 * E18;
-
-    uint public constant BONUS = 15;
 
     bool public tokensTradeable;
 
@@ -416,19 +296,9 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     mapping(address => bool) public whitelist;
     uint public numberWhitelisted;
 
-    // tokens issued
-    // mapping(address => uint) balances; // in ERC20Token
-    // uint public tokensIssuedTotal; // in ERC20Token
+    // tracking tokens minted
 
-    uint public tokensMinted;
-    uint public tokensPresale; // includes bonus
-    uint public tokensMain;
-
-    mapping(address => uint) public balancesPresaleBeforeBonus;
-    mapping(address => uint) public balancesMain;
-
-    mapping(address => uint) public ethContributed;
-    uint public totalEthContributed;
+    mapping(address => uint) public balancesMinted;
 
     // migration variable
 
@@ -437,47 +307,23 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     // Events ---------------------------------------------
 
     event Whitelisted(address indexed account, uint countWhitelisted);
-    event UpdatedTokensPerEth(uint tokensPerEth);
-    event TokensMinted(address indexed account, uint tokens, uint term);
-    event RegisterContribution(address indexed account, bool indexed presale, uint tokens, uint bonus, uint ethContributed, uint ethReturned);
+    event TokensMinted(uint indexed mintType, address indexed account, uint tokens, uint term);
     event TokenExchangeRequested(address indexed account, uint tokens);
 
     // Basic Functions ------------------------------------
 
-    constructor() public {
-        require(TOKEN_TOTAL_SUPPLY == TOKEN_MINTING_CAP + TOKEN_MAIN_CAP);
-        require(TOKEN_PRESALE_CAP < TOKEN_MAIN_CAP);
-    }
+    constructor() public {}
 
-    function () public payable {
-        buyTokens();
-    }
+    function () public {}
 
-    // Information Functions ------------------------------
+    // Information functions
+
+    function availableToMint() public view returns (uint) {
+      return TOKEN_TOTAL_SUPPLY.sub(tokensIssuedTotal);
+    }
     
-    function availableToMint() public view returns (uint available) {
-        available = TOKEN_MINTING_CAP.sub(tokensMinted);
-    }
-
-    function firstDayLimitPresale() public view returns (uint) {
-        if (numberWhitelisted == 0) return 0;
-        return TOKEN_PRESALE_CAP.mul(100) / numberWhitelisted.mul(100 + BONUS);
-    }
-
-    function firstDayLimitMain() public view returns (uint) {
-        if (numberWhitelisted == 0) return 0;
-        return TOKEN_MAIN_CAP.sub(tokensPresale) / numberWhitelisted;
-    }
-
-    function ethToTokens(uint _eth) public view returns (uint tokens) {
-        tokens = _eth.mul(tokensPerEth);
-    }
-
-    function tokensToEth(uint _tokens) public view returns (uint eth) {
-        eth = _tokens / tokensPerEth;
-    }
-
-    // Whitelisting ---------------------------------------
+    
+    // Admin functions
 
     function addToWhitelist(address _account) public onlyAdmin {
         pWhitelist(_account);
@@ -490,7 +336,6 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     }
 
     function pWhitelist(address _account) internal {
-        require(!isPresaleFirstDay() && !isMainFirstDay());
         if (whitelist[_account]) return;
         whitelist[_account] = true;
         numberWhitelisted = numberWhitelisted.add(1);
@@ -499,145 +344,52 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     // Owner functions ------------------------------------
 
-    function updateTokensPerEth(uint _tokens_per_eth) public onlyAdmin {
-        require(!isPresale() && !isMain());
-        tokensPerEth = _tokens_per_eth;
-        emit UpdatedTokensPerEth(tokensPerEth);
-    }
-
     function makeTradeable() public onlyOwner {
-        require(atNow() > dateMainEnd);
         tokensTradeable = true;
     }
 
-    function openMigrationPhase() public onlyOwner {
-        require(atNow() > dateMainEnd);
-        isMigrationPhaseOpen = true;
+    // Token minting (only way to issue tokens) -----------
+
+    function mintTokens(uint _mint_type, address _account, uint _tokens) public onlyOwner {
+        pMintTokens(_mint_type, _account, _tokens, 0);
     }
 
-    // Minting of unrestricted tokens ---------------------
-
-    function mintTokens(address _account, uint _tokens) public onlyOwner {
-        pMintTokens(_account, _tokens);
-    }
-
-    function mintTokensMultiple(address[] _accounts, uint[] _tokens) public onlyOwner {
+    function mintTokensMultiple(uint _mint_type, address[] _accounts, uint[] _tokens) public onlyOwner {
         require(_accounts.length == _tokens.length);
         for (uint i = 0; i < _accounts.length; i++) {
-            pMintTokens(_accounts[i], _tokens[i]);
+            pMintTokens(_mint_type, _accounts[i], _tokens[i], 0);
         }
     }
 
-    function pMintTokens(address _account, uint _tokens) private {
-        // checks
-        require(_account != 0x0);
-        require(_tokens > 0);
-        require(_tokens <= availableToMint(), "not enough tokens available to mint");
-
-        // update
-        balances[_account] = balances[_account].add(_tokens);
-        tokensMinted = tokensMinted.add(_tokens);
-        tokensIssuedTotal = tokensIssuedTotal.add(_tokens);
-
-        // log event
-        emit Transfer(0x0, _account, _tokens);
-        emit TokensMinted(_account, _tokens, 0);
+    function mintTokensLocked(uint _mint_type, address _account, uint _tokens, uint _term) public onlyOwner {
+        pMintTokens(_mint_type, _account, _tokens, _term);
     }
 
-    // Minting of locked tokens -----------------------------
-
-    function mintTokensLocked(address _account, uint _tokens, uint _term) public onlyOwner {
-        pMintTokensLocked(_account, _tokens, _term);
-    }
-
-    function mintTokensLockedMultiple(address[] _accounts, uint[] _tokens, uint[] _terms) public onlyOwner {
+    function mintTokensLockedMultiple(uint _mint_type, address[] _accounts, uint[] _tokens, uint[] _terms) public onlyOwner {
         require(_accounts.length == _tokens.length);
         require(_accounts.length == _terms.length);
         for (uint i = 0; i < _accounts.length; i++) {
-            pMintTokensLocked(_accounts[i], _tokens[i], _terms[i]);
+            pMintTokens(_mint_type, _accounts[i], _tokens[i], _terms[i]);
         }
     }
 
-    function pMintTokensLocked(address _account, uint _tokens, uint _term) private {
+    function pMintTokens(uint _mint_type, address _account, uint _tokens, uint _term) private {
         require(_account != 0x0);
         require(_tokens > 0);
         require(_tokens <= availableToMint(), "not enough tokens available to mint");
-        require(_term > atNow(), "lock term must be in the future");
+        require(_term == 0 || _term > atNow(), "either without lock term, or lock term must be in the future");
 
         // register locked tokens (will throw if no slot is found)
-        registerLockedTokens(_account, _tokens, _term);
+        if (_term > 0) registerLockedTokens(_account, _tokens, _term);
 
         // update
         balances[_account] = balances[_account].add(_tokens);
-        tokensMinted = tokensMinted.add(_tokens);
+        balancesMinted[_account] = balancesMinted[_account].add(_tokens);
         tokensIssuedTotal = tokensIssuedTotal.add(_tokens);
 
         // log event
         emit Transfer(0x0, _account, _tokens);
-        emit TokensMinted(_account, _tokens, _term);
-    }
-
-    // Process ICO contributions ----------------------------
-
-    function buyTokens() private {
-
-        require(isPresale() || isMain());
-        require(msg.value >= MINIMUM_CONTRIBUTION);
-        require(whitelist[msg.sender]);
-
-        uint tokens_requested = ethToTokens(msg.value);
-        uint tokens_available;
-
-        uint tokens = tokens_requested; // = tokens_issued + tokens_bonus
-        uint tokens_issued = tokens_requested;
-        uint tokens_bonus;
-        uint tokens_rejected;
-
-        uint eth_contributed = msg.value;
-        uint eth_returned;
-
-        if (isPresaleFirstDay()) {
-            tokens_available = firstDayLimitPresale().sub(balancesPresaleBeforeBonus[msg.sender]);
-        } else if (isPresale()) {
-            tokens_available = TOKEN_PRESALE_CAP.sub(tokensPresale).mul(100) / (100 + BONUS);
-        } else if (isMainFirstDay()) {
-            tokens_available = firstDayLimitMain().sub(balancesMain[msg.sender]);
-        } else if (isMain()) {
-            tokens_available = TOKEN_MAIN_CAP.sub(tokensPresale).sub(tokensMain);
-        }
-
-        require (tokens_available > 0);
-
-        if (tokens_requested > tokens_available) {
-            tokens = tokens_available;
-            tokens_issued = tokens_available;
-            tokens_rejected = tokens_requested.sub(tokens_available);
-            eth_returned = tokensToEth(tokens_rejected);
-            eth_contributed = msg.value.sub(eth_returned);
-        }
-
-        if (isPresale()) {
-            tokens_bonus = tokens_issued.mul(BONUS) / 100;
-            tokens = tokens.add(tokens_bonus);
-            balancesPresaleBeforeBonus[msg.sender] = balancesPresaleBeforeBonus[msg.sender].add(tokens_issued);
-            tokensPresale = tokensPresale.add(tokens);
-        } else if (isMain()) {
-            balancesMain[msg.sender] = balancesMain[msg.sender].add(tokens);
-            tokensMain = tokensMain.add(tokens);
-        }
-
-        balances[msg.sender] = balances[msg.sender].add(tokens);
-        tokensIssuedTotal = tokensIssuedTotal.add(tokens);
-        ethContributed[msg.sender] = ethContributed[msg.sender].add(eth_contributed);
-        totalEthContributed = totalEthContributed.add(eth_contributed);
-
-        // ether transfers
-        if (eth_returned > 0) msg.sender.transfer(eth_returned);
-        wallet.transfer(eth_contributed);
-
-        // log
-        emit Transfer(0x0, msg.sender, tokens_issued.add(tokens_bonus));
-        emit RegisterContribution(msg.sender, isPresale(), tokens, tokens_bonus, eth_contributed, eth_returned);
+        emit TokensMinted(_mint_type, _account, _tokens, _term);
     }
 
     // Token exchange / migration to new platform ---------
@@ -666,7 +418,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     function transfer(address _to, uint _amount) public returns (bool success) {
         require(tokensTradeable);
-        require(_amount <= unlockedTokens(msg.sender));
+        require(_amount <= unlockedTokensInternal(msg.sender));
         return super.transfer(_to, _amount);
     }
 
@@ -674,7 +426,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
         require(tokensTradeable);
-        require(_amount <= unlockedTokens(_from)); 
+        require(_amount <= unlockedTokensInternal(_from)); 
         return super.transferFrom(_from, _to, _amount);
     }
 
@@ -690,7 +442,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         for (uint i = 0; i < _addresses.length; i++) {
             tokens_to_transfer = tokens_to_transfer.add(_amounts[i]);
         }
-        require(tokens_to_transfer <= unlockedTokens(msg.sender));
+        require(tokens_to_transfer <= unlockedTokensInternal(msg.sender));
 
         // do the transfers
         for (i = 0; i < _addresses.length; i++) {
