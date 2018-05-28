@@ -331,7 +331,7 @@ contract FantomIcoDates is Owned, Utils {
         require(atNow() < _unixts && atNow() < dateMainEnd);
         dateMainEnd = _unixts;
         checkDateOrder();
-        emit IcoDateUpdated(1, _unixts);
+        emit IcoDateUpdated(2, _unixts);
     }
 
     // where are we?
