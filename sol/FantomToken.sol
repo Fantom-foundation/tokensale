@@ -368,6 +368,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     // track main sale
 
     uint public tokensMain;
+    mapping(address => uint) public balancesMain;
 
     uint public totalEthContributed;
     mapping(address => uint) public ethContributed;
@@ -518,7 +519,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         uint tokens_available;
 
         if (isMainFirstDay()) {
-            tokens_available = firstDayTokenLimit().sub(balances[msg.sender]);
+            tokens_available = firstDayTokenLimit().sub(balancesMain[msg.sender]);
         } else if (isMain()) {
             tokens_available = TOKEN_MAIN_CAP.sub(tokensMain);
         }
@@ -538,6 +539,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         }
 
         balances[msg.sender] = balances[msg.sender].add(tokens_issued);
+        balancesMain[msg.sender] = balancesMain[msg.sender].add(tokens_issued);
         tokensMain = tokensMain.add(tokens_issued);
         tokensIssuedTotal = tokensIssuedTotal.add(tokens_issued);
 
