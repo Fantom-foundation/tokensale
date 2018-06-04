@@ -34,7 +34,7 @@ library SafeMath {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    
+
 }
 
 
@@ -45,11 +45,11 @@ library SafeMath {
 // ----------------------------------------------------------------------------
 
 contract Utils {
-    
+
     function atNow() public view returns (uint) {
         return block.timestamp;
     }
-    
+
 }
 
 
@@ -222,12 +222,12 @@ contract LockSlots is ERC20Token, Utils {
     event RegisteredLockedTokens(address indexed account, uint indexed idx, uint tokens, uint term);
 
     function registerLockedTokens(address _account, uint _tokens, uint _term) internal returns (uint idx) {
-        require(_term > atNow(), "lock term must be in the future"); 
+        require(_term > atNow(), "lock term must be in the future");
 
         // find a slot (clean up while doing this)
         // use either the existing slot with the exact same term,
         // of which there can be at most one, or the first empty slot
-        idx = 9999;    
+        idx = 9999;
         uint[LOCK_SLOTS] storage term = lockTerm[_account];
         uint[LOCK_SLOTS] storage amnt = lockAmnt[_account];
         for (uint i = 0; i < LOCK_SLOTS; i++) {
@@ -297,7 +297,7 @@ contract LockSlots is ERC20Token, Utils {
 //
 // ----------------------------------------------------------------------------
 
-contract FantomIcoDates is Owned, Utils {    
+contract FantomIcoDates is Owned, Utils {
 
     uint public dateMainStart    = 1527861600; // 01-JUN-2018 14:00 UTC
     uint public dateMainEnd      = 1527861600 + 15 days;
@@ -359,7 +359,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     // Utility variable
 
     uint constant E18 = 10**18;
-    
+
     // Basic token data
 
     string public constant name = "Fantom Token";
@@ -442,7 +442,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     }
 
     function addToWhitelistMultiple(address[] _addresses) public onlyAdmin {
-        for (uint i = 0; i < _addresses.length; i++) { 
+        for (uint i = 0; i < _addresses.length; i++) {
             pWhitelist(_addresses[i]);
         }
     }
@@ -463,8 +463,12 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         emit UpdatedTokensPerEth(tokensPerEth);
     }
 
-    function makeTradeable() public onlyOwner {
-        require(atNow() > dateMainEnd);
+    // Only owner can make tokens tradable at any time, or if the date is
+    // greater than the end of the mainsale date plus 20 weeks, allow
+    // any caller to make tokensTradeable.
+    
+    function makeTradeable() public {
+        require(msg.sender == owner || atNow() > dateMainEnd + 20 weeks); .
         tokensTradeable = true;
     }
 
@@ -602,7 +606,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
         require(tokensTradeable);
-        require(_amount <= unlockedTokensInternal(_from)); 
+        require(_amount <= unlockedTokensInternal(_from));
         return super.transferFrom(_from, _to, _amount);
     }
 
