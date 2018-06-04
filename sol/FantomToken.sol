@@ -366,14 +366,18 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     string public constant symbol = "FTM";
     uint public constant decimals = 18;
 
+    // Token number of possible tokens in existance
+
+    uint public constant MAX_TOTAL_TOKEN_SUPPLY = 3175000000 * E18;
+
+
     // crowdsale parameters
 
     uint public tokensPerEth = 10000;
 
     uint public constant MINIMUM_CONTRIBUTION = 0.5 ether;
 
-    uint public constant TOKEN_TOTAL_SUPPLY = 1000000000 * E18;
-    uint public constant TOKEN_MAIN_CAP     =  600000000 * E18;
+    uint public constant TOKEN_MAIN_CAP =  600000000 * E18;
 
     bool public tokensTradeable;
 
@@ -418,8 +422,9 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     // Information functions
 
+
     function availableToMint() public view returns (uint) {
-        return TOKEN_TOTAL_SUPPLY.sub(TOKEN_MAIN_CAP).sub(tokensMinted);
+        return MAX_TOTAL_TOKEN_SUPPLY.sub(TOKEN_MAIN_CAP).sub(tokensMinted);
     }
 
     function firstDayTokenLimit() public view returns (uint) {
@@ -466,9 +471,9 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     // Only owner can make tokens tradable at any time, or if the date is
     // greater than the end of the mainsale date plus 20 weeks, allow
     // any caller to make tokensTradeable.
-    
+
     function makeTradeable() public {
-        require(msg.sender == owner || atNow() > dateMainEnd + 20 weeks); .
+        require(msg.sender == owner || atNow() > dateMainEnd + 20 weeks);
         tokensTradeable = true;
     }
 
@@ -597,6 +602,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     /* Override "transfer" */
 
     function transfer(address _to, uint _amount) public returns (bool success) {
+        require(_to != 0x0);
         require(tokensTradeable);
         require(_amount <= unlockedTokensInternal(msg.sender));
         return super.transfer(_to, _amount);
@@ -605,6 +611,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     /* Override "transferFrom" */
 
     function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
+        require(_to != 0x0);
         require(tokensTradeable);
         require(_amount <= unlockedTokensInternal(_from));
         return super.transferFrom(_from, _to, _amount);
