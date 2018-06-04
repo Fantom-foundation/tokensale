@@ -364,7 +364,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     string public constant name = "Fantom Token";
     string public constant symbol = "FTM";
-    uint public constant decimals = 18;
+    uint8 public constant decimals = 18;
 
     // Token number of possible tokens in existance
 
