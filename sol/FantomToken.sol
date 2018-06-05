@@ -154,24 +154,24 @@ contract ERC20Token is ERC20Interface, Owned {
     }
     // Includes BOTH locked AND unlocked tokens
 
-    function balanceOf(address _owner) public view returns (uint balance) {
+    function balanceOf(address _owner) public view returns (uint) {
         return balances[_owner];
     }
 
-    function transfer(address _to, uint _amount) public returns (bool success) {
+    function transfer(address _to, uint _amount) public returns (bool) {
         balances[msg.sender] = balances[msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
         emit Transfer(msg.sender, _to, _amount);
         return true;
     }
 
-    function approve(address _spender, uint _amount) public returns (bool success) {
+    function approve(address _spender, uint _amount) public returns (bool) {
         allowed[msg.sender][_spender] = _amount;
         emit Approval(msg.sender, _spender, _amount);
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
+    function transferFrom(address _from, address _to, uint _amount) public returns (bool) {
         balances[_from] = balances[_from].sub(_amount);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
@@ -179,7 +179,7 @@ contract ERC20Token is ERC20Interface, Owned {
         return true;
     }
 
-    function allowance(address _owner, address _spender) public view returns (uint remaining) {
+    function allowance(address _owner, address _spender) public view returns (uint) {
         return allowed[_owner][_spender];
     }
 
@@ -212,7 +212,7 @@ contract LockSlots is ERC20Token {
         idx = 9999;
         uint[LOCK_SLOTS] storage term = lockTerm[_account];
         uint[LOCK_SLOTS] storage amnt = lockAmnt[_account];
-        for (uint i = 0; i < LOCK_SLOTS; i++) {
+        for (uint i; i < LOCK_SLOTS; i++) {
             if (term[i] < now) {
                 term[i] = 0;
                 amnt[i] = 0;
@@ -246,7 +246,7 @@ contract LockSlots is ERC20Token {
         if (!mayHaveLockedTokens[_account]) return true;
         if (_term < now) return true;
         uint[LOCK_SLOTS] storage term = lockTerm[_account];
-        for (uint i = 0; i < LOCK_SLOTS; i++) {
+        for (uint i; i < LOCK_SLOTS; i++) {
             if (term[i] < now || term[i] == _term) return true;
         }
         return false;
@@ -265,7 +265,7 @@ contract LockSlots is ERC20Token {
     function pNumberOfLockedTokens(address _account) private view returns (uint locked) {
         uint[LOCK_SLOTS] storage term = lockTerm[_account];
         uint[LOCK_SLOTS] storage amnt = lockAmnt[_account];
-        for (uint i = 0; i < LOCK_SLOTS; i++) {
+        for (uint i; i < LOCK_SLOTS; i++) {
             if (term[i] >= now) locked = locked.add(amnt[i]);
         }
     }
@@ -427,7 +427,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     }
 
     function addToWhitelistMultiple(address[] _addresses) public onlyAdmin {
-        for (uint i = 0; i < _addresses.length; i++) {
+        for (uint i; i < _addresses.length; i++) {
             pWhitelist(_addresses[i]);
         }
     }
@@ -470,7 +470,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     function mintTokensMultiple(uint _mint_type, address[] _accounts, uint[] _tokens) public onlyOwner {
         require(_accounts.length == _tokens.length);
-        for (uint i = 0; i < _accounts.length; i++) {
+        for (uint i; i < _accounts.length; i++) {
             pMintTokens(_mint_type, _accounts[i], _tokens[i], 0);
         }
     }
@@ -482,7 +482,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     function mintTokensLockedMultiple(uint _mint_type, address[] _accounts, uint[] _tokens, uint[] _terms) public onlyOwner {
         require(_accounts.length == _tokens.length);
         require(_accounts.length == _terms.length);
-        for (uint i = 0; i < _accounts.length; i++) {
+        for (uint i; i < _accounts.length; i++) {
             pMintTokens(_mint_type, _accounts[i], _tokens[i], _terms[i]);
         }
     }
@@ -605,7 +605,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         require(_addresses.length == _amounts.length);
 
         // do the transfers
-        for (uint i = 0; i < _addresses.length; i++) {
+        for (uint i; i < _addresses.length; i++) {
             super.transfer(_addresses[i], _amounts[i]);
         }
     }
