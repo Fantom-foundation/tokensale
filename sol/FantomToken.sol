@@ -296,7 +296,7 @@ contract FantomIcoDates is Owned {
       require ( dateMainEnd < DATE_LIMIT ) ;
     }
 
-    constructor() public checkDateOrder {
+    constructor() public checkDateOrder() {
         require(now < dateMainStart);
     }
 
