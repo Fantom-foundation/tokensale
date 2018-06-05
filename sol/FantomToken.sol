@@ -152,6 +152,7 @@ contract ERC20Token is ERC20Interface, Owned {
     function totalSupply() public view returns (uint) {
         return tokensIssuedTotal;
     }
+    // Includes BOTH locked AND unlocked tokens
 
     function balanceOf(address _owner) public view returns (uint balance) {
         return balances[_owner];
@@ -410,12 +411,12 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         return TOKEN_MAIN_CAP / numberWhitelisted;
     }
 
-    function ethToTokens(uint _eth) public view returns (uint tokens) {
-        tokens = _eth.mul(tokensPerEth);
+    function weiToTokens(uint _wei) public view returns (uint tokens) {
+        tokens = _wei.mul(tokensPerEth);
     }
 
-    function tokensToEth(uint _tokens) public view returns (uint eth) {
-        eth = _tokens / tokensPerEth;
+    function tokensToEth(uint _tokens) public view returns (uint _wei) {
+        _wei = _tokens / tokensPerEth;
     }
 
     // Admin functions
@@ -525,7 +526,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
         require (tokens_available > 0);
 
-        uint tokens_requested = ethToTokens(msg.value);
+        uint tokens_requested = weiToTokens(msg.value);
         uint tokens_issued = tokens_requested;
 
         uint eth_contributed = msg.value;
@@ -602,7 +603,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         require(_addresses.length == _amounts.length);
 
         // do the transfers
-        for (i = 0; i < _addresses.length; i++) {
+        for (uint i = 0; i < _addresses.length; i++) {
             super.transfer(_addresses[i], _amounts[i]);
         }
     }
