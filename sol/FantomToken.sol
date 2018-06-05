@@ -159,6 +159,7 @@ contract ERC20Token is ERC20Interface, Owned {
     }
 
     function transfer(address _to, uint _amount) public returns (bool) {
+        require(_to != 0x0);
         balances[msg.sender] = balances[msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
         emit Transfer(msg.sender, _to, _amount);
@@ -172,6 +173,7 @@ contract ERC20Token is ERC20Interface, Owned {
     }
 
     function transferFrom(address _from, address _to, uint _amount) public returns (bool) {
+        require(_to != 0x0);
         balances[_from] = balances[_from].sub(_amount);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
@@ -412,12 +414,12 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         return TOKEN_MAIN_CAP / numberWhitelisted;
     }
 
-    function weiToTokens(uint _wei) public view returns (uint tokens) {
-        tokens = _wei.mul(tokensPerEth);
+    function ethToTokens(uint _eth) public view returns (uint tokens) {
+        tokens = _eth.mul(tokensPerEth);
     }
 
-    function tokensToEth(uint _tokens) public view returns (uint _wei) {
-        _wei = _tokens / tokensPerEth;
+    function tokensToEth(uint _tokens) public view returns (uint eth) {
+        eth = _tokens / tokensPerEth;
     }
 
     // Admin functions
@@ -527,7 +529,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
         require (tokens_available > 0);
 
-        uint tokens_requested = weiToTokens(msg.value);
+        uint tokens_requested = ethToTokens(msg.value);
         uint tokens_issued = tokens_requested;
 
         uint eth_contributed = msg.value;
@@ -582,7 +584,6 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     /* Override "transfer" */
 
     function transfer(address _to, uint _amount) public returns (bool success) {
-        require(_to != 0x0);
         require(tokensTradeable);
         require(_amount <= unlockedTokensInternal(msg.sender));
         return super.transfer(_to, _amount);
@@ -591,7 +592,6 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     /* Override "transferFrom" */
 
     function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
-        require(_to != 0x0);
         require(tokensTradeable);
         require(_amount <= unlockedTokensInternal(_from));
         return super.transferFrom(_from, _to, _amount);
