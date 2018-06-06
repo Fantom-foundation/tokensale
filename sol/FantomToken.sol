@@ -283,10 +283,10 @@ contract LockSlots is ERC20Token {
 
 contract FantomIcoDates is Owned {
 
-    uint public dateMainStart    = 1527861600; // 01-JUN-2018 14:00 UTC
-    uint public dateMainEnd      = 1527861600 + 15 days;
+    uint public dateMainStart = 1529053200; // 15-JUN-2018 09:00 UTC
+    uint public dateMainEnd   = 1529658000; // 22-JUN-2018 09:00 UTC
 
-    uint public constant DATE_LIMIT = 1527861600 + 180 days;
+    uint public constant DATE_LIMIT = 1529658000 + 180 days;
 
     event IcoDateUpdated(uint id, uint unixts);
 
@@ -355,11 +355,12 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     // crowdsale parameters
 
-    uint public tokensPerEth = 10000;
+    uint public tokensPerEth = 15000;
 
-    uint public constant MINIMUM_CONTRIBUTION = 0.5 ether;
+    uint public constant MINIMUM_CONTRIBUTION = 0.2 ether;
+    uint public constant MAXIMUM_FIRST_DAY_CONTRIBUTION = 1.5 ether;
 
-    uint public constant TOKEN_MAIN_CAP =  600000000 * E18;
+    uint public constant TOKEN_MAIN_CAP = 50000000 * E18;
 
     bool public tokensTradeable;
 
@@ -410,8 +411,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     }
 
     function firstDayTokenLimit() public view returns (uint) {
-        if (numberWhitelisted == 0) return 0;
-        return TOKEN_MAIN_CAP / numberWhitelisted;
+        return ethToTokens(MAXIMUM_FIRST_DAY_CONTRIBUTION);
     }
 
     function ethToTokens(uint _eth) public view returns (uint tokens) {
@@ -435,7 +435,6 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     }
 
     function pWhitelist(address _account) internal {
-        require(!isMainFirstDay());
         if (whitelist[_account]) return;
         whitelist[_account] = true;
         numberWhitelisted = numberWhitelisted.add(1);
@@ -519,12 +518,14 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         require(msg.value >= MINIMUM_CONTRIBUTION);
         require(whitelist[msg.sender]);
 
-        uint tokens_available;
+        uint tokens_available = TOKEN_MAIN_CAP.sub(tokensMain);
 
+        // adjust tokens_available on first day, if necessary
         if (isMainFirstDay()) {
-            tokens_available = firstDayTokenLimit().sub(balancesMain[msg.sender]);
-        } else if (isMain()) {
-            tokens_available = TOKEN_MAIN_CAP.sub(tokensMain);
+            uint tokens_available_first_day = firstDayTokenLimit().sub(balancesMain[msg.sender]);
+            if (tokens_available_first_day < tokens_available) {
+                tokens_available = tokens_available_first_day;
+            }
         }
 
         require (tokens_available > 0);
