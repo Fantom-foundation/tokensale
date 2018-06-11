@@ -605,6 +605,13 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         require(_addresses.length <= 100);
         require(_addresses.length == _amounts.length);
 
+        // check token amounts
+        uint tokens_to_transfer = 0;
+        for (uint i = 0; i < _addresses.length; i++) {
+            tokens_to_transfer = tokens_to_transfer.add(_amounts[i]);
+        }
+        require(tokens_to_transfer <= unlockedTokensInternal(msg.sender));
+        
         // do the transfers
         for (uint i; i < _addresses.length; i++) {
             super.transfer(_addresses[i], _amounts[i]);
