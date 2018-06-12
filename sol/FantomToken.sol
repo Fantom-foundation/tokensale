@@ -601,7 +601,6 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     /* Multiple token transfers from one address to save gas */
 
     function transferMultiple(address[] _addresses, uint[] _amounts) external {
-        require(tokensTradeable);
         require(_addresses.length <= 100);
         require(_addresses.length == _amounts.length);
 
