@@ -10,6 +10,8 @@ SHA256 hash = 208a6b65b503ba3eab58348053afca240040518c0dffd94466a4847417250162
 
 https://etherscan.io/tx/0x5eed1f62bf05452602ab7886e18762110591883e74127e0a9daa3e308426b913
 
+Decision at 12-JUN-2018 @ 17:00 UTC -- corresponding to NIST beacon at 06/12/2018 7:00 pm. 
+
 ## Stage 1 Lottery Results
 
 ## Stage 2 Lottery Inputs
