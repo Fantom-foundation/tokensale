@@ -14,7 +14,7 @@ Decision at 12-JUN-2018 @ 17:00 UTC -- corresponding to NIST beacon at 06/12/201
 
 ## Stage 1 Lottery Results
 
-The lottery results are in [lottery_1_result.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_1_result.txt)
+The lottery results are [lottery_1_result.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_1_result.txt)
 
 Here is the NIST beacon value at 06/12/2018 7:00 pm (https://beacon.nist.gov/home):
 
@@ -30,6 +30,10 @@ We had 84,631 randomly shuffled addresses, and R % 84,631 = 20,220 wich can be s
 Therefore, the lottery winners are the 6,000 addresses starting at index 20,220 in the original list.
 
 Note that selecting randomly from an ordered list is equivalent to shuffling first and then taking a slice - and this second method can be done more transparently than the first one.
+
+Lottery results with indices based on the original ordered list:
+
+[lottery_1_result_canonical.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_1_result_canonical.txt)
 
 ## Stage 2 Lottery Inputs
 
