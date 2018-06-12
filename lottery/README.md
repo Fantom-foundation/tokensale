@@ -4,7 +4,7 @@
 
 ## Stage 1 Lottery Inputs
 
-[lottery_1_input.txt](https://github.com/fantom-foundation/lottery/lottery_1_input.txt)
+The lottery data is in [lottery_1_input.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_1_input.txt)
 
 SHA256 hash = 208a6b65b503ba3eab58348053afca240040518c0dffd94466a4847417250162
 
