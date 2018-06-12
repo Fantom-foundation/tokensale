@@ -19,6 +19,7 @@ Here is the NIST beacon value at 06/12/2018 7:00 pm (https://beacon.nist.gov/hom
 E7FB52653FDCEC8562C226C14526B8B877AA99AD89D55EBA402BCF70A981E6CD
 F4B3A42F2AE2FF68804795B92C01C7534105B66CBDE3767577B2B92394D14C72
 
+The lottery results are in [lottery_1_result.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_1_result.txt)
 
 ## Stage 2 Lottery Inputs
 
