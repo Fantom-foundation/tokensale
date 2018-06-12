@@ -31,9 +31,7 @@ Therefore, the lottery winners are the 6,000 addresses starting at index 20,220 
 
 Note that selecting randomly from an ordered list is equivalent to shuffling first and then taking a slice - and this second method can be done more transparently than the first one.
 
-Lottery results with indices based on the original ordered list:
-
-[lottery_1_result_canonical.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_1_result_canonical.txt)
+Lottery results with indices based on the original ordered list: [lottery_1_result_canonical.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_1_result_canonical.txt)
 
 ## Stage 2 Lottery Inputs
 
