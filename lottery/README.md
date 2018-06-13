@@ -56,6 +56,6 @@ NIST beacon value = 957FD16D5797775FED5AC70D9AB69E35560E8610CDF4C345FD1E35CA36F6
 
 Lottery result: [lottery_2_result.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_2_result.txt)
 
-## Stage 2 Lottery Inputs
+## Last Stage Lottery Inputs
 
-## Stage 2 Lottery Results
+## Last Stage Lottery Results
