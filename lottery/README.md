@@ -35,4 +35,27 @@ Lottery results with indices based on the original ordered list: [lottery_1_resu
 
 ## Stage 2 Lottery Inputs
 
+This was an additional lottery to select a further 3,600 addresses from the list of remaining 78,631 addresses not seected in the first lottery.
+
+NIST Beacon decision time: 06/13/2018 00:15 am (https://beacon.nist.gov/home)
+corresponding to 12-JUN-2018 22:15:00 UTC
+
+Lottery data: [lottery_2_input.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_2_input.txt)
+
+hash = 0x1cd155018775dcb91834591028704993e67e8ed0c86cf66a0150f9ea0eb87f42
+
+https://etherscan.io/tx/0x901934bf931ec9372e352e4794b5a8aabf750d207b446b5c63f288328f2f6a93
+
+The NIST Beacon decision time was 06/13/2018 00:15 am
+
+## Stage 2 Lottery Results
+
+Sorted lottery data: [lottery_2_input_raw.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_2_input_raw.txt)
+
+NIST beacon value = 957FD16D5797775FED5AC70D9AB69E35560E8610CDF4C345FD1E35CA36F6D87DE028FC34736C2E2079B3A6C32E29645B3ADA588B3F5981209173E329746BB922
+
+Lottery result: [lottery_2_result.txt](https://github.com/Fantom-foundation/tokensale/blob/master/lottery/lottery_2_result.txt)
+
+## Stage 2 Lottery Inputs
+
 ## Stage 2 Lottery Results
