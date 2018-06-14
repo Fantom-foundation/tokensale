@@ -361,10 +361,10 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
     uint public tokensPerEth = 11582;
 
     // USD$2,000,000/463.28 = 4317.043668 ether
-    // 4317.043668 ether/2551 addresses = 1.692294664 ether per address for the first 24 hours
+    // 4317.043668 ether/2551 addresses = 1.692294656 ether per address for the first 24 hours
 
     uint public constant MINIMUM_CONTRIBUTION = 0.2 ether;
-    uint public constant MAXIMUM_FIRST_DAY_CONTRIBUTION = 1.692294664 ether;
+    uint public constant MAXIMUM_FIRST_DAY_CONTRIBUTION = 1.692294656 ether;
 
     uint public constant TOKEN_MAIN_CAP = 50000000 * E18;
 
