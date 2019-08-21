@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity >=0.4.23;
 
 // ----------------------------------------------------------------------------
 //
@@ -45,8 +45,8 @@ library SafeMath {
 
 contract Owned {
 
-    address public owner;
-    address public newOwner;
+    address payable public owner;
+    address payable public newOwner;
 
     mapping(address => bool) public isAdmin;
 
@@ -62,7 +62,7 @@ contract Owned {
         isAdmin[owner] = true;
     }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
+    function transferOwnership(address payable _newOwner) public onlyOwner {
         require(_newOwner != address(0x0));
         emit OwnershipTransferProposed(owner, _newOwner);
         newOwner = _newOwner;
@@ -97,15 +97,15 @@ contract Owned {
 
 contract Wallet is Owned {
 
-    address public wallet;
+    address payable public wallet;
 
-    event WalletUpdated(address newWallet);
+    event WalletUpdated(address payable newWallet);
 
     constructor() public {
         wallet = owner;
     }
 
-    function setWallet(address _wallet) public onlyOwner {
+    function setWallet(address payable _wallet) public onlyOwner {
         require(_wallet != address(0x0));
         wallet = _wallet;
         emit WalletUpdated(_wallet);
@@ -159,7 +159,7 @@ contract ERC20Token is ERC20Interface, Owned {
     }
 
     function transfer(address _to, uint _amount) public returns (bool) {
-        require(_to != 0x0);
+        require(_to != address(0));
         balances[msg.sender] = balances[msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
         emit Transfer(msg.sender, _to, _amount);
@@ -173,7 +173,7 @@ contract ERC20Token is ERC20Interface, Owned {
     }
 
     function transferFrom(address _from, address _to, uint _amount) public returns (bool) {
-        require(_to != 0x0);
+        require(_to != address(0));
         balances[_from] = balances[_from].sub(_amount);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
@@ -283,10 +283,10 @@ contract LockSlots is ERC20Token {
 
 contract FantomIcoDates is Owned {
 
-    uint public dateMainStart = 1529053200; // 15-JUN-2018 09:00 GMT + 0
-    uint public dateMainEnd   = 1529658000; // 22-JUN-2018 09:00 GMT + 0
+    uint public dateMainStart = 1629053200; // Sunday, 15 August 2021 18:46:40
+    uint public dateMainEnd   = 1639053200; // Thursday, 9 December 2021 12:33:20
 
-    uint public constant DATE_LIMIT = 1529658000 + 180 days;
+    uint public constant DATE_LIMIT = 1629053200 + 180 days;
 
     event IcoDateUpdated(uint id, uint unixts);
 
@@ -405,7 +405,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     constructor() public {}
 
-    function () public payable {
+    function () external payable {
         buyTokens();
     }
 
@@ -434,7 +434,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         pWhitelist(_account);
     }
 
-    function addToWhitelistMultiple(address[] _addresses) public onlyAdmin {
+    function addToWhitelistMultiple(address[] memory _addresses) public onlyAdmin {
         for (uint i; i < _addresses.length; i++) {
             pWhitelist(_addresses[i]);
         }
@@ -475,7 +475,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         pMintTokens(_mint_type, _account, _tokens, 0);
     }
 
-    function mintTokensMultiple(uint _mint_type, address[] _accounts, uint[] _tokens) public onlyOwner {
+    function mintTokensMultiple(uint _mint_type, address[] memory _accounts, uint[] memory _tokens) public onlyOwner {
         require(_accounts.length == _tokens.length);
         for (uint i; i < _accounts.length; i++) {
             pMintTokens(_mint_type, _accounts[i], _tokens[i], 0);
@@ -486,7 +486,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         pMintTokens(_mint_type, _account, _tokens, _term);
     }
 
-    function mintTokensLockedMultiple(uint _mint_type, address[] _accounts, uint[] _tokens, uint[] _terms) public onlyOwner {
+    function mintTokensLockedMultiple(uint _mint_type, address[] memory _accounts, uint[] memory _tokens, uint[] memory _terms) public onlyOwner {
         require(_accounts.length == _tokens.length);
         require(_accounts.length == _terms.length);
         for (uint i; i < _accounts.length; i++) {
@@ -496,7 +496,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     function pMintTokens(uint _mint_type, address _account, uint _tokens, uint _term) private {
         require(whitelist[_account]);
-        require(_account != 0x0);
+        require(_account != address(0));
         require(_tokens > 0);
         require(_tokens <= availableToMint(), "not enough tokens available to mint");
         require(_term == 0 || _term > now, "either without lock term, or lock term must be in the future");
@@ -512,7 +512,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         tokensIssuedTotal = tokensIssuedTotal.add(_tokens);
 
         // log event
-        emit Transfer(0x0, _account, _tokens);
+        emit Transfer(address(0), _account, _tokens);
         emit TokensMinted(_mint_type, _account, _tokens, _term);
     }
 
@@ -561,7 +561,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         wallet.transfer(eth_contributed);
 
         // log
-        emit Transfer(0x0, msg.sender, tokens_issued);
+        emit Transfer(address(0x0), msg.sender, tokens_issued);
         emit RegisterContribution(msg.sender, tokens_issued, eth_contributed, eth_returned);
     }
 
@@ -576,7 +576,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
         require(_tokens > 0 && _tokens <= unlockedTokensInternal(msg.sender));
         balances[msg.sender] = balances[msg.sender].sub(_tokens);
         tokensIssuedTotal = tokensIssuedTotal.sub(_tokens);
-        emit Transfer(msg.sender, 0x0, _tokens);
+        emit Transfer(msg.sender, address(0x0), _tokens);
         emit TokenExchangeRequested(msg.sender, _tokens);
     }
 
@@ -606,7 +606,7 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
     /* Multiple token transfers from one address to save gas */
 
-    function transferMultiple(address[] _addresses, uint[] _amounts) external {
+    function transferMultiple(address[] calldata _addresses, uint[] calldata _amounts) external {
         require(_addresses.length <= 100);
         require(_addresses.length == _amounts.length);
 
